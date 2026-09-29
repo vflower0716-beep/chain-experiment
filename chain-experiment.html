@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>どこまで届く？</title>
+<style>
+  :root {
+    --bg: #f7f3ee; --panel: #ffffff; --ink: #2b2622; --sub: #8a8078;
+    --accent: #e2725b; --border: #e5ddd3; --shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1a18; --panel: #262320; --ink: #f0eae3; --sub: #a89f95;
+      --accent: #e8836a; --border: #3a352f; --shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1a18; --panel: #262320; --ink: #f0eae3; --sub: #a89f95;
+    --accent: #e8836a; --border: #3a352f; --shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 20px 18px 40px; }
+  h1 { font-size: 20px; margin: 6px 0 2px; text-align: center; }
+  h2.sub { font-size: 14px; color: var(--sub); font-weight: 400; text-align: center; margin: 0 0 18px; }
+  .card { background: var(--panel); border-radius: 16px; box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px; }
+  .meta-row { display: flex; justify-content: space-around; text-align: center; font-size: 12px; color: var(--sub); margin: 14px 0 4px; }
+  .meta-row div span { display: block; font-size: 18px; margin-bottom: 2px; }
+  .from-msg { background: var(--bg); border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 14px; border: 1px solid var(--border); }
+  .from-msg b { color: var(--accent); }
+  .chain-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .chain-item:last-child { border-bottom: none; }
+  .num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .chain-item .animal { font-size: 17px; }
+  p.desc { color: var(--sub); font-size: 13px; line-height: 1.7; margin: 0 0 16px; }
+  label.field-label { display: block; font-size: 12px; color: var(--sub); margin: 14px 0 6px; }
+  input[type="text"] {
+    width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--ink); font-size: 15px;
+  }
+  .name-display {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border);
+    font-size: 15px; font-weight: 600;
+  }
+  .name-display button {
+    border: none; background: none; color: var(--accent); font-size: 12px; cursor: pointer; font-weight: 600;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .chip {
+    padding: 9px 13px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg);
+    color: var(--ink); font-size: 12.5px; cursor: pointer;
+  }
+  .chip.emoji { font-size: 20px; padding: 8px 11px; }
+  .chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn {
+    width: 100%; padding: 13px; border-radius: 12px; border: none; background: var(--accent);
+    color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; }
+  .btn.line { background: #06C755; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+  .btn.secondary { background: var(--panel); color: var(--ink); border: 1px solid var(--border); }
+  .result-hide { display: none; }
+  .fun-fact { font-size: 12px; color: var(--sub); line-height: 1.7; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
+  .send-instructions { font-size: 13px; line-height: 1.7; color: var(--ink); background: var(--bg); border-radius: 10px; padding: 12px 14px; margin: 10px 0; border: 1px solid var(--border); }
+  .linkbox { margin-top: 8px; padding: 10px; background: var(--bg); border-radius: 8px; font-size: 11px; word-break: break-all; color: var(--sub); }
+  .optional-tag { font-size: 11px; color: var(--sub); font-weight: 400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>どこまで届く？</h1>
+  <h2 class="sub">あなたの友達から、何人先までつながれる？</h2>
+
+  <div id="fromMsgCard" class="from-msg" style="display:none;"></div>
+
+  <div id="introCard" class="card">
+    <p class="desc" id="descText"></p>
+    <div class="meta-row">
+      <div><span>⏱️</span>約15秒</div>
+      <div><span>🔒</span>本名不要</div>
+      <div><span>👀</span>結果が見られる</div>
+    </div>
+  </div>
+
+  <div class="card" id="chainCard" style="display:none;">
+    <div id="chainList"></div>
+  </div>
+
+  <div class="card" id="formCard">
+    <label class="field-label">あなたの表示名</label>
+    <div class="name-display">
+      <span id="nameDisplay"></span>
+      <button id="shuffleName">かえる</button>
+    </div>
+
+    <label class="field-label">今の自分を動物にすると？ <span class="optional-tag">（任意）</span></label>
+    <div class="chips" id="animalChips">
+      <div class="chip emoji" data-v="🐈">🐈</div>
+      <div class="chip emoji" data-v="🐕">🐕</div>
+      <div class="chip emoji" data-v="🐰">🐰</div>
+      <div class="chip emoji" data-v="🦥">🦥</div>
+      <div class="chip emoji" data-v="🐥">🐥</div>
+      <div class="chip emoji" data-v="🦖">🦖</div>
+    </div>
+
+    <label class="field-label">次の人への一言 <span class="optional-tag">（任意）</span></label>
+    <div class="chips" id="msgChips">
+      <div class="chip" data-v="">なし</div>
+      <div class="chip" data-v="こんにちは">こんにちは</div>
+      <div class="chip" data-v="よろしく！">よろしく！</div>
+      <div class="chip" data-v="楽しんでね">楽しんでね</div>
+    </div>
+
+    <button class="btn" id="submitBtn">参加する</button>
+  </div>
+
+  <div class="card result-hide" id="resultCard">
+    <p class="desc" id="resultText"></p>
+
+    <label class="field-label">参加してみて、気になったのは？ <span class="optional-tag">（任意）</span></label>
+    <div class="chips" id="reasonChips">
+      <div class="chip" data-v="知らない人まで繋がるのが面白い">知らない人まで繋がるのが面白い</div>
+      <div class="chip" data-v="友達の友達が気になる">友達の友達が気になる</div>
+      <div class="chip" data-v="どこまで続くか気になる">どこまで続くか気になる</div>
+      <div class="chip" data-v="特に何も感じなかった">特に何も感じなかった</div>
+    </div>
+
+    <div class="send-instructions" id="sendInstructions"></div>
+    <a class="btn line" id="lineBtn" target="_blank" rel="noopener">LINEで送る</a>
+    <button class="btn secondary" id="copyBtn">リンクをコピー</button>
+    <div class="linkbox" id="linkText"></div>
+    <div class="fun-fact">
+      実はこれ、「六次の隔たり」という考え方を試す小さな実験です。世界中のどんな2人も、知人をたどると意外と少ない人数でつながっているのでは、というアイデアです。
+    </div>
+  </div>
+</div>
+
+<script>
+  function decodeChain() {
+    const params = new URLSearchParams(window.location.search);
+    const c = params.get('c');
+    if (!c) return [];
+    try { return JSON.parse(decodeURIComponent(escape(atob(c)))); } catch (e) { return []; }
+  }
+  function encodeChain(chain) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(chain))));
+  }
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  const NAME_POOL = ['匿名うさぎ', '覆面ねこ', '名無し狐', '覆面パンダ', '謎のかもめ', '秘密のたぬき', '覆面ひつじ', '名無しくま'];
+  function randomName() { return NAME_POOL[Math.floor(Math.random() * NAME_POOL.length)]; }
+
+  const chain = decodeChain();
+  const myPosition = chain.length + 1;
+  const fromMsgCard = document.getElementById('fromMsgCard');
+  const descText = document.getElementById('descText');
+  const chainCard = document.getElementById('chainCard');
+  const chainList = document.getElementById('chainList');
+
+  if (chain.length > 0) {
+    const prev = chain[chain.length - 1];
+    if (prev.msg) {
+      fromMsgCard.style.display = 'block';
+      fromMsgCard.innerHTML = `<b>${prev.animal || ''} ${escapeHtml(prev.name)}</b>さんから届きました：「${escapeHtml(prev.msg)}」`;
+    }
+    chainCard.style.display = 'block';
+    chain.forEach((p, i) => {
+      const div = document.createElement('div');
+      div.className = 'chain-item';
+      div.innerHTML = `<div class="num">${i + 1}</div><div class="animal">${p.animal || ''}</div><div>${escapeHtml(p.name || '匿名')}</div>`;
+      chainList.appendChild(div);
+    });
+    descText.textContent = `これは卒業制作の小さな実験です。あなたはこのリンクで${myPosition}人目。参加すると、あなたの友達1人に送れるリンクができます。`;
+  } else {
+    descText.textContent = 'これは卒業制作の小さな実験です。参加すると、友達1人に送れるリンクができます。あなたを起点に、つながりがどこまで広がるか見てみます。';
+  }
+
+  let currentName = randomName();
+  const nameDisplay = document.getElementById('nameDisplay');
+  nameDisplay.textContent = currentName;
+  document.getElementById('shuffleName').addEventListener('click', () => {
+    currentName = randomName();
+    nameDisplay.textContent = currentName;
+  });
+
+  let selectedAnimal = '';
+  document.querySelectorAll('#animalChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#animalChips .chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedAnimal = chip.dataset.v;
+    });
+  });
+
+  let selectedMsg = '';
+  const msgChips = document.querySelectorAll('#msgChips .chip');
+  msgChips[0].classList.add('selected');
+  msgChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      msgChips.forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedMsg = chip.dataset.v;
+    });
+  });
+
+  let selectedReason = '';
+  let currentUrl = '';
+
+  function rebuildUrl() {
+    const newChain = [...chain, { name: currentName, animal: selectedAnimal, msg: selectedMsg, reason: selectedReason }];
+    currentUrl = window.location.origin + window.location.pathname + '?c=' + encodeChain(newChain);
+    document.getElementById('linkText').textContent = currentUrl;
+    const lineIntro = myPosition === 1 ? '卒制の実験！15秒くらいで終わるからやってみて→ ' : '友達がやってる実験なんだけど、やってみてほしい！→ ';
+    const lineText = encodeURIComponent(lineIntro + currentUrl);
+    document.getElementById('lineBtn').href = 'https://line.me/R/msg/text/?' + lineText;
+  }
+
+  document.querySelectorAll('#reasonChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#reasonChips .chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedReason = chip.dataset.v;
+      rebuildUrl();
+    });
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', () => {
+    document.getElementById('formCard').style.display = 'none';
+    document.getElementById('resultCard').classList.remove('result-hide');
+    document.getElementById('resultText').innerHTML = `<b>${selectedAnimal} ${escapeHtml(currentName)}さんは${myPosition}人目！</b><br>このリンクを、あなたの友達1人に送ってみてください。`;
+    const introLine = myPosition === 1
+      ? '卒制の実験なんだけど、15秒くらいで終わるからやってみて！'
+      : '友達がやってる実験なんだけど、やってみてほしい！';
+    document.getElementById('sendInstructions').textContent =
+      `「${introLine}」と一言添えて送ると開いてもらいやすいです。`;
+    rebuildUrl();
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(currentUrl).then(() => {
+        document.getElementById('copyBtn').textContent = 'コピーしました！';
+      }).catch(() => {});
+    });
+  });
+</script>
+</body>
+</html>
